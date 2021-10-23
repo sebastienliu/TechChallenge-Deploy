@@ -1,0 +1,300 @@
+---
+AWSTemplateFormatVersion: "2010-09-09"
+Description: >
+  This template deploys a VPC for TechChallenge
+
+Parameters:
+
+  Environment:
+    Description: "Environment name to deploy application into."
+    Type: "String"
+
+Mappings:
+  NetworkToSubnet:
+    "10.0.0.0":
+      PublicSubnetZoneA: "10.0.10.0/24"
+      PublicSubnetZoneB: "10.0.30.0/24"
+      PrivateSubnetZoneA: "10.0.20.0/24"
+      PrivateSubnetZoneB: "10.0.40.0/24"
+
+
+Resources:
+####### Create VPC #######
+  VPC:
+    Type: "AWS::EC2::VPC"
+    Properties:
+      CidrBlock: !Join [ '/', [ '10.0.0.0', '16' ] ]
+      Tags:
+      - Key: "Name"
+        Value: !Sub "${Environment}-TechChallengeVPC"
+
+####### Create Public Subnet #######
+  PublicSubnetZoneA:
+    Type: "AWS::EC2::Subnet"
+    Properties:
+      VpcId: !Ref "VPC"
+      CidrBlock: 
+        Fn::FindInMap:
+        - NetworkToSubnet
+        - "10.0.0.0"
+        - PublicSubnetZoneA
+      AvailabilityZone: !Select [ '0', !GetAZs ]
+      MapPublicIpOnLaunch: "True"
+      Tags:
+      - Key: "Name"
+        Value: !Sub "${Environment}-PublicSubnetZoneA"
+
+  PublicSubnetZoneB:
+    Type: "AWS::EC2::Subnet"
+    Properties:
+      VpcId: !Ref "VPC"
+      CidrBlock:
+        Fn::FindInMap:
+        - NetworkToSubnet
+        - "10.0.0.0"
+        - PublicSubnetZoneB
+      AvailabilityZone: !Select [ '1', !GetAZs ]
+      MapPublicIpOnLaunch: "True"
+      Tags:
+      - Key: "Name"
+        Value: !Sub "${Environment}-PublicSubnetZoneB"
+
+######## Create Private Subnet #######
+  PrivateSubnetZoneA:
+    Type: "AWS::EC2::Subnet"
+    Properties:
+      VpcId: !Ref "VPC"
+      CidrBlock:
+        Fn::FindInMap:
+        - NetworkToSubnet
+        - "10.0.0.0"
+        - PrivateSubnetZoneA
+      AvailabilityZone: !Select [ '0', !GetAZs ]
+      Tags:
+      - Key: "Name"
+        Value: !Sub "${Environment}-PrivateSubnetZoneA"
+
+  PrivateSubnetZoneB:
+    Type: "AWS::EC2::Subnet"
+    Properties:
+      VpcId: !Ref "VPC"
+      CidrBlock:
+        Fn::FindInMap:
+        - NetworkToSubnet
+        - "10.0.0.0"
+        - PrivateSubnetZoneB
+      AvailabilityZone: !Select [ '1', !GetAZs ]
+      Tags:
+      - Key: "Name"
+        Value: !Sub "${Environment}-PrivateSubnetZoneB"
+
+######## Create Internet Gateway #######
+  TCInternetGateway:
+    Type: "AWS::EC2::InternetGateway"
+    Properties:
+      Tags:
+      - Key: "Name"
+        Value: !Sub "${Environment}-TCIGW"
+
+######## Attach Internet Gateway to VPC #######
+  GatewayToInternet:
+    Type: "AWS::EC2::VPCGatewayAttachment"
+    Properties:
+      VpcId: !Ref "VPC"
+      InternetGatewayId: !Ref "TCInternetGateway"
+
+######## Create Public Route Table #######
+  TCPublicRouteTable1:
+    Type: "AWS::EC2::RouteTable"
+    Properties:
+      VpcId: !Ref "VPC"
+      Tags:
+      - Key: "Name"
+        Value: !Sub "${Environment}-TCPublicRoute1"
+
+  TCPublicRouteTable2:
+    Type: "AWS::EC2::RouteTable"
+    Properties:
+      VpcId: !Ref "VPC"
+      Tags:
+      - Key: "Name"
+        Value: !Sub "${Environment}-TCPublicRoute2"
+
+######## Create Private Route Table #######
+  TCPrivateRouteTable1:
+    Type: "AWS::EC2::RouteTable"
+    Properties:
+      VpcId: !Ref "VPC"
+      Tags:
+      - Key: "Name"
+        Value: !Sub "${Environment}-TCPrivateRoute1"
+
+  TCPrivateRouteTable2:
+    Type: "AWS::EC2::RouteTable"
+    Properties:
+      VpcId: !Ref "VPC"
+      Tags:
+      - Key: "Name"
+        Value: !Sub "${Environment}-TCPrivateRoute2"
+
+######## Public Route Table to TCIGW #######
+  TCPublicRouteIGW1:
+    Type: "AWS::EC2::Route"
+    DependsOn: "GatewayToInternet"
+    Properties:
+      RouteTableId: !Ref "TCPublicRouteTable1"
+      DestinationCidrBlock: "0.0.0.0/0"
+      GatewayId: !Ref "TCInternetGateway"
+
+  TCPublicRouteIGW2:
+    Type: "AWS::EC2::Route"
+    DependsOn: "GatewayToInternet"
+    Properties:
+      RouteTableId: !Ref "TCPublicRouteTable2"
+      DestinationCidrBlock: "0.0.0.0/0"
+      GatewayId: !Ref "TCInternetGateway"
+
+######## Associate Public Route Tables #######
+  TCPublicSubnet1RouteTableAssociation:
+    Type: "AWS::EC2::SubnetRouteTableAssociation"
+    Properties:
+      SubnetId: !Ref "PublicSubnetZoneA"
+      RouteTableId: !Ref "TCPublicRouteTable1"
+
+  TCPublicSubnet2RouteTableAssociation:
+    Type: "AWS::EC2::SubnetRouteTableAssociation"
+    Properties:
+      SubnetId: !Ref "PublicSubnetZoneB"
+      RouteTableId: !Ref "TCPublicRouteTable2"
+
+######## Associate Private Route Tables #######
+  TCPrivateSubnet1RouteTableAssociation:
+    Type: "AWS::EC2::SubnetRouteTableAssociation"
+    Properties:
+      SubnetId: !Ref "PrivateSubnetZoneA"
+      RouteTableId: !Ref "TCPrivateRouteTable1"
+
+  TCPrivateSubnet2RouteTableAssociation:
+    Type: "AWS::EC2::SubnetRouteTableAssociation"
+    Properties:
+      SubnetId: !Ref "PrivateSubnetZoneB"
+      RouteTableId: !Ref "TCPrivateRouteTable2"
+
+######## Create and Associate Nat Gateway #######
+  TCNATGateway1EIP:
+    Type: "AWS::EC2::EIP"
+    DependsOn: "GatewayToInternet"
+    Properties:
+      Domain: "vpc"
+
+  TCNATGateway2EIP:
+    Type: "AWS::EC2::EIP"
+    DependsOn: "GatewayToInternet"
+    Properties:
+      Domain: "vpc"
+
+  TCNATGateway1:
+    Type: "AWS::EC2::NatGateway"
+    DependsOn: "GatewayToInternet"
+    Properties:
+      AllocationId:
+        Fn::GetAtt:
+        - "TCNATGateway1EIP"
+        - "AllocationId"
+      SubnetId: !Ref "PublicSubnetZoneA"
+
+  TCNATGateway2:
+    Type: "AWS::EC2::NatGateway"
+    DependsOn: "GatewayToInternet"
+    Properties:
+      AllocationId:
+        Fn::GetAtt:
+        - "TCNATGateway2EIP"
+        - "AllocationId"
+      SubnetId: !Ref "PublicSubnetZoneB"
+
+  TCNatPrivateRoute1:
+    Type: "AWS::EC2::Route"
+    Properties:
+      RouteTableId: !Ref "TCPrivateRouteTable1"
+      DestinationCidrBlock: "0.0.0.0/0"
+      NatGatewayId: !Ref "TCNATGateway1"
+
+  TCNatPrivateRoute2:
+    Type: "AWS::EC2::Route"
+    Properties:
+      RouteTableId: !Ref "TCPrivateRouteTable2"
+      DestinationCidrBlock: "0.0.0.0/0"
+      NatGatewayId: !Ref "TCNATGateway2"
+
+######## Create and Associate Custom Network ACL #######
+  TCPublicNetworkACL:
+    Type: "AWS::EC2::NetworkAcl"
+    Properties:
+      VpcId: !Ref "VPC"
+      Tags:
+        - Key: "Name"
+          Value: !Sub "${Environment}-TCPublicNetworkACL"
+
+  TCPrivateNetworkACL:
+    Type: "AWS::EC2::NetworkAcl"
+    Properties:
+      VpcId: !Ref "VPC"
+      Tags:
+        - Key: "Name"
+          Value: !Sub "${Environment}-TCPrivateNetworkACL"
+
+  TCPublicSubnet1NetworkAclAssociation:
+    Type: "AWS::EC2::SubnetNetworkAclAssociation"
+    Properties:
+      SubnetId: !Ref "PublicSubnetZoneA"
+      NetworkAclId: !Ref "TCPublicNetworkACL"
+
+  TCPublicSubnet2NetworkAclAssociation:
+    Type: "AWS::EC2::SubnetNetworkAclAssociation"
+    Properties:
+      SubnetId: !Ref "PublicSubnetZoneB"
+      NetworkAclId: !Ref "TCPublicNetworkACL"
+
+  TCPrivateSubnet1NetworkAclAssociation:
+    Type: "AWS::EC2::SubnetNetworkAclAssociation"
+    Properties:
+      SubnetId: !Ref "PrivateSubnetZoneA"
+      NetworkAclId: !Ref "TCPrivateNetworkACL"
+
+  TCPrivateSubnet2NetworkAclAssociation:
+    Type: "AWS::EC2::SubnetNetworkAclAssociation"
+    Properties:
+      SubnetId: !Ref "PrivateSubnetZoneB"
+      NetworkAclId: !Ref "TCPrivateNetworkACL"
+
+Outputs:
+  VPC:
+    Description: "A reference to the created VPC"
+    Value: !Ref "VPC"
+    Export:
+      Name: !Sub "${Environment}-VPC"
+
+  PublicSubnetZoneA:
+    Description: "A reference to the public subnet in the 1st Availability Zone"
+    Value: !Ref "PublicSubnetZoneA"
+    Export:
+      Name: !Sub "${Environment}-PublicSubnetZoneA"
+
+  PublicSubnetZoneB:
+    Description: "A reference to the public subnet in the 2nd Availability Zone"
+    Value: !Ref "PublicSubnetZoneB"
+    Export:
+      Name: !Sub "${Environment}-PublicSubnetZoneB"
+
+  PrivateSubnetZoneA:
+    Description: "A reference to the private subnet in the 1st Availability Zone"
+    Value: !Ref "PrivateSubnetZoneA"
+    Export:
+      Name: !Sub "${Environment}-PrivateSubnetZoneA"
+
+  PrivateSubnetZoneB:
+    Description: "A reference to the private subnet in the 2nd Availability Zone"
+    Value: !Ref "PrivateSubnetZoneB"
+    Export:
+      Name: !Sub "${Environment}-PrivateSubnetZoneB"
