@@ -1,0 +1,25 @@
+Description: This template creates security groups required for each component.
+
+Parameters:
+  Environment:
+    Description: The environment to deploy the app
+    Type: String
+
+  VPC:
+    Description: The security groups should be deployed to.
+    Type: AWS::EC2::VPC::Id
+
+Resources:
+  AlbSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      VpcId: !Ref VPC
+      GroupDescription: Security Group for ALB
+      SecurityGroupIngress:
+        - CidrIp: 0.0.0.0/0
+          IpProtocol: -1
+
+Outputs:
+  AlbSecurityGroup:
+    Description: The security group for ALB
+    Value: !Ref AlbSecurityGroup
