@@ -1,0 +1,31 @@
+Description: This template deploys a whole stack.
+
+Parameters:
+  S3BucketUrl:
+    Description: S3 Bucket url plus the prefix required 
+    Type: String
+
+  Environment:
+    Description: Environment for deploying the app
+    Type: String
+
+Resources:
+  VPC:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub ${S3BucketUrl}vpc.yml
+      Parameters:
+        Environment:    !Ref Environment
+        VpcCIDR:            10.0.0.0/16
+        PublicSubnet1CIDR:  10.0.10.0/24
+        PublicSubnet2CIDR:  10.0.20.0/24
+        PrivateSubnet1CIDR: 10.0.30.0/24
+        PrivateSubnet2CIDR: 10.0.40.0/24
+
+  SecurityGroups:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub ${S3BucketUrl}security_groups.yml
+      Parameters:
+        Environment: ! Ref Environment
+        VPC: !GetAtt VPC.Outputs.VPC
