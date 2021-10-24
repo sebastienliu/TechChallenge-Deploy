@@ -11,11 +11,13 @@ Parameters:
 
   RDSMasterUsername:
     Description: RDS Master user
-    Type: String
+    Type: AWS::SSM::Parameter::Value<String>
+    Default: RDSMasterUsername
   
   RDSMasterUserPassword:
     Description: RDS Master user password
-    Type: String
+    Type: AWS::SSM::Parameter::Value<String>
+    Default: RDSMasterUserPassword
 
 Resources:
   VPC:
