@@ -18,8 +18,35 @@ Resources:
       SecurityGroupIngress:
         - CidrIp: 0.0.0.0/0
           IpProtocol: -1
+  ###### Grant incoming requests from ALB only ######
+  ECSClusterSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      VpcId: !Ref VPC
+      GroupDescription: Security Group for ECS Cluster
+      SecurityGroupIngress:
+        - SourceSecurityGroupId: !Ref AlbSecurityGroup
+          IpProtocol: -1
+
+  ###### Grant incoming requests from ECS only ######
+  RDSSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      VpcId: !Ref VPC
+      GroupDescription: Security Group for RDS
+      SecurityGroupIngress:
+        - SourceSecurityGroupId: !Ref ECSClusterSecurityGroup
+          IpProtocol: -1
 
 Outputs:
   AlbSecurityGroup:
     Description: The security group for ALB
     Value: !Ref AlbSecurityGroup
+
+  ECSClusterSecurityGroup:
+    Description: The security group for ECS cluster
+    Value: !Ref ECSClusterSecurityGroup
+
+  RDSSecurityGroup:
+    Description: The security group for RDS cluster
+    Value: !Ref RDSSecurityGroup

@@ -9,6 +9,14 @@ Parameters:
     Description: Environment for deploying the app
     Type: String
 
+  RDSMasterUsername:
+    Description: RDS Master user
+    Type: String
+  
+  RDSMasterUserPassword:
+    Description: RDS Master user password
+    Type: String
+
 Resources:
   VPC:
     Type: AWS::CloudFormation::Stack
@@ -27,7 +35,7 @@ Resources:
     Properties:
       TemplateURL: !Sub ${S3BucketUrl}security_groups.yml
       Parameters:
-        Environment: ! Ref Environment
+        Environment: !Ref Environment
         VPC: !GetAtt VPC.Outputs.VPC
 
   ALB:
@@ -35,7 +43,18 @@ Resources:
     Properties:
       TemplateURL: !Sub ${S3BucketUrl}alb.yml
       Parameters:
-        Environment: ! Ref Environment
+        Environment: !Ref Environment
         VPC: !GetAtt VPC.Outputs.VPC
         PublicSubnets: !GetAtt VPC.Outputs.PublicSubnets
         AlbSecurityGroup: !GetAtt SecurityGroups.Outputs.AlbSecurityGroup
+
+  RDS:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub ${S3BucketUrl}rds.yml
+      Parameters:
+        Environment: !Ref Environment
+        RDSSecurityGroup: !GetAtt SecurityGroups.Outputs.RDSSecurityGroup 
+        RDSSubnetGroup: !GetAtt VPC.Outputs.DBSubnetGroup
+        RDSMasterUsername: !Ref RDSMasterUsername
+        RDSMasterUserPassword: !Ref RDSMasterUserPassword
