@@ -1,0 +1,53 @@
+Description: This template deploys a Postgres RDS
+
+Parameters:
+  Environment:
+    Description: Environment for deploy the RDS
+    Type: String
+
+  RDSSecurityGroup:
+    Description: Security Group for creating the RDS
+    Type: AWS::EC2::SecurityGroup::Id
+
+  RDSSubnetGroup:
+    Description: RDS subnet group name
+    Type: String
+
+  RDSMasterUsername:
+    Description: RDS Master username
+    Type: String
+
+  RDSMasterUserPassword:
+    Description: RDS Master user password
+    Type: String
+
+Resources:
+  TCDatabase:
+    Type: AWS::RDS::DBInstance
+    Properties:
+      AllocatedStorage: 5
+      DBInstanceClass: db.t2.micro
+      VPCSecurityGroups:
+        - !Ref RDSSecurityGroup
+      DBName: !Sub ${Environment}_tcpgdb
+      DBSubnetGroupName: !Ref RDSSubnetGroup
+      Engine: postgres
+      EngineVersion: 9.6.23
+      MasterUsername: !Ref RDSMasterUsername
+      MasterUserPassword: !Ref RDSMasterUserPassword
+      MultiAZ: true 
+
+Outputs:
+  RDSHost:
+    Description: The output of the RDS connection url
+    Value: !GetAtt TCDatabase.Endpoint.Address
+
+  RDSDBName:
+    Description: The name of the database
+    Value: !Sub ${Environment}_tcpgdb
+
+  RDSPort:
+    Description: The connection port
+    Value: !GetAtt TCDatabase.Endpoint.Port
+
+
