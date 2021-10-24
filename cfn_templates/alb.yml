@@ -1,0 +1,66 @@
+Description: This template is to create an ALB for the app
+
+Parameters:
+  Environment:
+    Description: The environment to deploy the app
+    Type: String
+
+  VPC:
+    Description: The VPC that the ALB deploy to
+    Type: AWS::EC2::VPC::Id
+
+  PublicSubnets:
+    Description: The list of subnets for ALB
+    Type: List<AWS::EC2::Subnet::Id>
+
+  AlbSecurityGroup:
+    Description: The security group for ALB
+    Type: AWS::EC2::SecurityGroup::Id
+
+Resources:
+  ALB:
+    Type: AWS::ElasticLoadBalancingV2::LoadBalancer
+    Properties:
+      Subnets: !Ref PublicSubnets
+      SecurityGroups:
+        - !Ref AlbSecurityGroup
+      Tags:
+        - Key: Name
+          Value: !Sub ${Environment}-TechChallenge-Alb
+
+  ALBListener:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Properties:
+      LoadBalancerArn: !Ref ALB
+      Port: 80
+      Protocol: HTTP
+      DefaultActions:
+        - Type: forward
+          TargetGroupArn: !Ref TCClusterTargetGroup
+
+  TCClusterTargetGroup:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      VpcId: !Ref VPC
+      Port: 3000
+      Protocol: HTTP
+      HealthCheckPath: /healthcheck/
+      HealthCheckIntervalSeconds: 30
+      HealthCheckProtocol: HTTP
+      HealthCheckTimeoutSeconds: 15
+      HealthyThresholdCount: 5
+      Matcher:
+        HttpCode: '200'
+
+Outputs:
+  ALB:
+    Description: The application load balancer for ECS cluster
+    Value: !Ref ALB
+
+  ALBListener:
+    Description: The ALB listener
+    Value: !Ref ALBListener
+
+  ALBUrl:
+    Description: The entrypoint of the ALB
+    Value: !GetAtt ALB.DNSName
