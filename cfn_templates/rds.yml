@@ -13,6 +13,10 @@ Parameters:
     Description: RDS subnet group name
     Type: String
 
+  RDSDBName:
+    Description: RDS Database Name
+    Type: String
+
   RDSMasterUsername:
     Description: RDS Master username
     Type: String
@@ -29,7 +33,7 @@ Resources:
       DBInstanceClass: db.t2.micro
       VPCSecurityGroups:
         - !Ref RDSSecurityGroup
-      DBName: !Sub ${Environment}_tcpgdb
+      DBName: !Ref RDSDBName
       DBSubnetGroupName: !Ref RDSSubnetGroup
       Engine: postgres
       EngineVersion: 9.6.23
@@ -41,10 +45,6 @@ Outputs:
   RDSHost:
     Description: The output of the RDS connection url
     Value: !GetAtt TCDatabase.Endpoint.Address
-
-  RDSDBName:
-    Description: The name of the database
-    Value: !Sub ${Environment}_tcpgdb
 
   RDSPort:
     Description: The connection port
