@@ -9,6 +9,11 @@ Parameters:
     Description: Environment for deploying the app
     Type: String
 
+  RDSDBName:
+    Description: RDS Database name
+    Type: AWS::SSM::Parameter::Value<String>
+    Default: RDSDBName
+
   RDSMasterUsername:
     Description: RDS Master user
     Type: AWS::SSM::Parameter::Value<String>
@@ -58,5 +63,6 @@ Resources:
         Environment: !Ref Environment
         RDSSecurityGroup: !GetAtt SecurityGroups.Outputs.RDSSecurityGroup 
         RDSSubnetGroup: !GetAtt VPC.Outputs.DBSubnetGroup
+        RDSDBName: !Ref RDSDBName
         RDSMasterUsername: !Ref RDSMasterUsername
         RDSMasterUserPassword: !Ref RDSMasterUserPassword
