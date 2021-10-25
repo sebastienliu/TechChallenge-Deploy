@@ -46,6 +46,8 @@ Outputs:
   ECSClusterSecurityGroup:
     Description: The security group for ECS cluster
     Value: !Ref ECSClusterSecurityGroup
+    Export:
+      Name: !Sub ${Environment}-ECSClusterSecurityGroup
 
   RDSSecurityGroup:
     Description: The security group for RDS cluster

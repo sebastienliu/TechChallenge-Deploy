@@ -197,6 +197,8 @@ Outputs:
   VPC:
     Description: Display the VPC details
     Value: !Ref VPC
+    Export:
+      Name: !Sub ${Environment}-VPC
 
   PublicSubnet1:
     Description: Display the public subnet id at AZ1
@@ -220,6 +222,8 @@ Outputs:
       - "," 
       - - !Ref PublicSubnet1
         - !Ref PublicSubnet2
+    Export:
+      Name: !Sub ${Environment}-PublicSubnets
 
   PrivateSubnets:
     Description: Create a list of the private subnets
@@ -227,6 +231,8 @@ Outputs:
       - ","
       - - !Ref PrivateSubnet1
         - !Ref PrivateSubnet2
+    Export:
+      Name: !Sub ${Environment}-PrivateSubnets
 
   DBSubnetGroup:
     Description: Display the subnet group for database

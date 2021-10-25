@@ -53,7 +53,12 @@ Outputs:
   ALBListener:
     Description: The ALB listener
     Value: !Ref ALBListener
+    Export:
+      Name: !Sub ${Environment}-ALBListener
 
   ALBUrl:
     Description: The entrypoint of the ALB
-    Value: !GetAtt ALB.DNSName
+    Value: !Join
+      - ""
+      - - "http://"
+        - !GetAtt ALB.DNSName
