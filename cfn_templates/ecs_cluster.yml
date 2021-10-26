@@ -16,6 +16,21 @@ Parameters:
     Type: String
     Default: subnet-08b441476474e991c
 
+  MinContainers:
+    Description: Minimum running containers
+    Type: Number
+    Default: 2
+
+  MaxContainers:
+    Description: Maximum running containers
+    Type: Number
+    Default: 6
+
+  AutoScalingTargetValue:
+    Description: Average CPU utilization
+    Type: Number
+    Default: 50
+
 Resources:
   TCListenerRule:
     Type: AWS::ElasticLoadBalancingV2::ListenerRule
@@ -88,8 +103,8 @@ Resources:
         Statement:
         - Effect: Allow
           Principal:
-            Service: [ecs-tasks.amazonaws.com]
-          Action: ['sts:AssumeRole']
+            Service: ecs-tasks.amazonaws.com
+          Action: 'sts:AssumeRole'
       Path: /
       Policies:
         - PolicyName: TechChallengeAmazonECSTaskExecutionRolePolicy
@@ -140,3 +155,47 @@ Resources:
               awslogs-group: !Ref CloudWatchLogsGroup
               awslogs-region: !Ref AWS::Region
               awslogs-stream-prefix: tcapp
+
+###### ECS AutoScaling ######
+  ECSAutoScalingRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: ecs-tasks.amazonaws.com
+            Action: 'sts:AssumeRole'
+      ManagedPolicyArns:
+        - 'arn:aws:iam::aws:policy/service-role/AmazonEC2ContainerServiceAutoscaleRole'
+
+  ECSAutoScalingTarget:
+    Type: AWS::ApplicationAutoScaling::ScalableTarget
+    Properties:
+      MinCapacity: !Ref MinContainers
+      MaxCapacity: !Ref MaxContainers
+      ResourceId: !Join
+        - "/"
+        - - service
+          - !Ref TCECSCluster
+          - !GetAtt TCECSService.Name
+      ScalableDimension: ecs:service:DesiredCount
+      ServiceNamespace: ecs
+      RoleARN: !GetAtt ECSAutoScalingRole.Arn
+
+###### Keep average CPU utilization ######
+  AutoScalingPolicy:
+    Type: AWS::ApplicationAutoScaling::ScalingPolicy
+    Properties:
+      PolicyName: !Join
+        - ""
+        - - !Ref TCECSService
+          - AutoScalingPolicy
+      PolicyType: TargetTrackingScaling
+      ScalingTargetId: !Ref ECSAutoScalingTarget
+      TargetTrackingScalingPolicyConfiguration:
+        PredefinedMetricSpecification:
+          PredefinedMetricType: ECSServiceAverageCPUUtilization
+        ScaleInCooldown: 10
+        ScaleOutCooldown: 10
+        TargetValue: !Ref AutoScalingTargetValue
