@@ -4,17 +4,6 @@ Parameters:
   Environment:
     Description: The environment for the deployment
     Type: String
-    Default: dev
-
-  PrivateSubnet1:
-    Description: PrivateSubnet1
-    Type: String
-    Default: subnet-0657d4beeb620c923
-
-  PrivateSubnet2:
-    Description: PrivateSubnet2
-    Type: String
-    Default: subnet-08b441476474e991c
 
   MinContainers:
     Description: Minimum running containers
@@ -42,6 +31,7 @@ Resources:
         - Field: path-pattern
           Values:
             - /*
+            - /api/tasks/*
       Actions:
         - TargetGroupArn: !Ref TCClusterTargetGroup
           Type: forward
@@ -84,8 +74,8 @@ Resources:
       NetworkConfiguration:
         AwsvpcConfiguration:
           Subnets:
-            - !Ref PrivateSubnet1
-            - !Ref PrivateSubnet2
+            - Fn::ImportValue: !Sub ${Environment}-PrivateSubnet1
+            - Fn::ImportValue: !Sub ${Environment}-PrivateSubnet2
           AssignPublicIp: DISABLED
           SecurityGroups:
             - Fn::ImportValue: !Sub ${Environment}-ECSClusterSecurityGroup
