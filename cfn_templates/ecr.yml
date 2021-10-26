@@ -1,14 +1,27 @@
 Description: This template is to create a docker registry on ECR
 
 Parameters:
-  Environment: The docker registry environment
-  Type: String
+  Environment:
+    Description: The docker registry environment
+    Type: String
 
 Resources:
   TechChallengeECR:
     Type: AWS::ECR::Repository
     Properties:
       RepositoryName: !Sub ${Environment}-tcapp
+      RepositoryPolicyText:
+        Version: "2012-10-17"
+        Statement:
+          -
+            Sid: AllowPushPull
+            Effect: Allow
+            Principal:
+                AWS:
+                    !Ref AWS::AccountId
+            Action:
+                - "ecr:*"
+                - "ecr:GetAuthorizationToken"
 
 Outputs:
   TechChallengeECRArn:
