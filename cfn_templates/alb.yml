@@ -36,21 +36,14 @@ Resources:
       Protocol: HTTP
       DefaultActions:
         - Type: forward
-          TargetGroupArn: !Ref TCClusterTargetGroup
+          TargetGroupArn: !Ref DefaultTargetGroup
 
-  TCClusterTargetGroup:
+  DefaultTargetGroup:
     Type: AWS::ElasticLoadBalancingV2::TargetGroup
     Properties:
       VpcId: !Ref VPC
-      Port: 3000
+      Port: 80
       Protocol: HTTP
-      HealthCheckPath: /healthcheck/
-      HealthCheckIntervalSeconds: 30
-      HealthCheckProtocol: HTTP
-      HealthCheckTimeoutSeconds: 15
-      HealthyThresholdCount: 5
-      Matcher:
-        HttpCode: '200'
 
 Outputs:
   ALB:
@@ -60,7 +53,12 @@ Outputs:
   ALBListener:
     Description: The ALB listener
     Value: !Ref ALBListener
+    Export:
+      Name: !Sub ${Environment}-ALBListener
 
   ALBUrl:
     Description: The entrypoint of the ALB
-    Value: !GetAtt ALB.DNSName
+    Value: !Join
+      - ""
+      - - "http://"
+        - !GetAtt ALB.DNSName
