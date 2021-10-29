@@ -54,7 +54,33 @@ Comparing the solutions using AWS services, AWS Fargate has the advantage of sim
 
 ### Prerequisites
 
+ - Setup an [AWS account](https://aws.amazon.com/premiumsupport/knowledge-center/create-and-activate-aws-account/)
+ - Install [AWS Cli](https://docs.aws.amazon.com/cli/latest/userguide/install-cliv2.html)
+ - Install [jq](https://stedolan.github.io/jq/download/)
+ - Configure [AWS Cli configuration and credential file](https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-files.html)
+
 ### Deploy Commands
+
+```
+Usage
+./deploy.sh \
+    --profile <aws profile> \
+    --environment <Environment for deploying the stack> \
+    --dbuser <database username> \
+    --dbpassword <database password> \
+    --dbname <database name> \
+
+Summary
+Deploy TechChallenge application an AWS environment
+
+Options
+--profile            The AWS Cli profile.
+--environment        The environment for deploying the app
+--dbuser             The username to connect to the database.
+--dbpassword         The password to connect to the database.
+--dbname             The database name to be created.
+-h | --help          Display this help text
+```
 
 ### Outputs Overview
 

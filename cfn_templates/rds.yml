@@ -45,9 +45,9 @@ Outputs:
   RDSHost:
     Description: The output of the RDS connection url
     Value: !GetAtt TCDatabase.Endpoint.Address
+    Export:
+      Name: !Sub ${Environment}-TCDatabase
 
   RDSPort:
     Description: The connection port
     Value: !GetAtt TCDatabase.Endpoint.Port
-
-
